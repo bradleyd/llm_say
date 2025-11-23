@@ -57,6 +57,8 @@ async fn get_llm_response(
         prompt: format!("{}, Answer the following\n {}", system_prompt, message),
         stream: false,
     };
+
+    #[cfg(debug_assertions)]
     dbg!(&request);
 
     let response = client
@@ -65,7 +67,9 @@ async fn get_llm_response(
         .send()
         .await?;
 
+    #[cfg(debug_assertions)]
     dbg!(&response);
+
     let resp: LLMResponse = response.json().await?;
 
     Ok(resp)
