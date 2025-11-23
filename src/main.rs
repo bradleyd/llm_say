@@ -1,4 +1,5 @@
 use clap::Parser;
+use colored::{self, ColoredString, Colorize};
 use serde::{Deserialize, Serialize};
 use tokio::runtime::Runtime;
 
@@ -10,6 +11,15 @@ struct Cli {
     #[clap(short = 'c', long = "character", default_value = "ferris")]
     character: String,
 }
+
+//type Character{
+//    fn display() -> String;
+//};
+//
+//struct Character {
+//    name: String,
+//    color: String,
+//}
 
 #[derive(Deserialize, Debug)]
 struct LLMResponse {
@@ -30,7 +40,6 @@ fn main() {
     let result = rt.block_on(async { get_llm_response(&cli.message, &cli.model).await });
     match result {
         Ok(response) => {
-            //println!("{:?}", response),
             display_llm_say(&response.response, &cli.character);
         }
         Err(err) => println!("Error getting llm response with {:?}", err),
@@ -74,8 +83,8 @@ fn display_llm_say(message: &str, character: &str) {
     let cleaned = message.trim().trim_matches('"').trim();
     let bubble = format_bubble(cleaned);
 
-    println!("{}", bubble);
-    println!("        \\  ");
+    println!("{}", bubble.bright_white());
+    println!("{}", "             \\  ".bright_black());
     println!("{}", generate_character(character));
 }
 
@@ -125,7 +134,7 @@ fn wrap_text(text: &str, max_width: usize) -> String {
     result.join("\n")
 }
 
-fn generate_character(character: &str) -> String {
+fn generate_character(character: &str) -> ColoredString {
     match character {
         "ferris" => ferris(),
         "cow" => cow(),
@@ -133,7 +142,7 @@ fn generate_character(character: &str) -> String {
     }
 }
 
-fn ferris() -> String {
+fn ferris() -> ColoredString {
     r#"
             _~^~^~_
         \) / o o \ (/
@@ -141,9 +150,10 @@ fn ferris() -> String {
           / '-----' \
 "#
     .to_string()
+    .red()
 }
 
-fn cow() -> String {
+fn cow() -> ColoredString {
     r#"
         ^__^
         (oo)\_______
@@ -152,4 +162,5 @@ fn cow() -> String {
             ||     ||
     "#
     .to_string()
+    .green()
 }
