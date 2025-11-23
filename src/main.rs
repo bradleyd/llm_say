@@ -2,6 +2,7 @@ use clap::Parser;
 use colored::{self, ColoredString, Colorize};
 use serde::{Deserialize, Serialize};
 use tokio::runtime::Runtime;
+mod characters;
 
 #[derive(Parser)]
 struct Cli {
@@ -11,15 +12,6 @@ struct Cli {
     #[clap(short = 'c', long = "character", default_value = "ferris")]
     character: String,
 }
-
-//type Character{
-//    fn display() -> String;
-//};
-//
-//struct Character {
-//    name: String,
-//    color: String,
-//}
 
 #[derive(Deserialize, Debug)]
 struct LLMResponse {
@@ -84,7 +76,8 @@ fn display_llm_say(message: &str, character: &str) {
     let bubble = format_bubble(cleaned);
 
     println!("{}", bubble.bright_white());
-    println!("{}", "             \\  ".bright_black());
+    println!("{}", "         \\  ".bright_black());
+    println!("{}", "          \\  ".bright_black());
     println!("{}", generate_character(character));
 }
 
@@ -136,31 +129,10 @@ fn wrap_text(text: &str, max_width: usize) -> String {
 
 fn generate_character(character: &str) -> ColoredString {
     match character {
-        "ferris" => ferris(),
-        "cow" => cow(),
-        _ => ferris(),
+        "ferris" => characters::ferris(),
+        "cow" => characters::cow(),
+        "dragon" => characters::dragon(),
+        "bunny" => characters::bunny(),
+        _ => characters::ferris(),
     }
-}
-
-fn ferris() -> ColoredString {
-    r#"
-            _~^~^~_
-        \) / o o \ (/
-          '_ - _'
-          / '-----' \
-"#
-    .to_string()
-    .red()
-}
-
-fn cow() -> ColoredString {
-    r#"
-        ^__^
-        (oo)\_______
-        (__)\       )\/\
-            ||----w |
-            ||     ||
-    "#
-    .to_string()
-    .green()
 }
