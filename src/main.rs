@@ -11,13 +11,15 @@ struct Cli {
     model: String,
     #[clap(short = 'c', long = "character", default_value = "ferris")]
     character: String,
+    #[clap(short = 'u', long = "url", default_value = "http://localhost:11434")]
+    url: String,
 }
 
 #[derive(Deserialize, Debug)]
 struct LLMResponse {
-    model: String,
+    //model: String,
     response: String,
-    done: bool,
+    //done: bool,
 }
 #[derive(Serialize, Debug)]
 struct LLMRequest {
@@ -29,7 +31,7 @@ struct LLMRequest {
 fn main() {
     let cli = Cli::parse();
     let rt = Runtime::new().unwrap();
-    let result = rt.block_on(async { get_llm_response(&cli.message, &cli.model).await });
+    let result = rt.block_on(async { get_llm_response(&cli.message, &cli.model, &cli.url).await });
     match result {
         Ok(response) => {
             display_llm_say(&response.response, &cli.character);
@@ -41,6 +43,7 @@ fn main() {
 async fn get_llm_response(
     message: &str,
     model: &str,
+    url: &str,
 ) -> Result<LLMResponse, Box<dyn std::error::Error>> {
     // build reqwest
     let client = reqwest::Client::new();
@@ -57,10 +60,7 @@ async fn get_llm_response(
     dbg!(&request);
 
     let response = client
-        .post(format!(
-            "{}/api/generate",
-            "http://localhost:11434".to_string()
-        ))
+        .post(format!("{}/api/generate", url))
         .json(&request)
         .send()
         .await?;
@@ -134,5 +134,70 @@ fn generate_character(character: &str) -> ColoredString {
         "dragon" => characters::dragon(),
         "bunny" => characters::bunny(),
         _ => characters::ferris(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn wrap_text_respects_max_width() {
+        let text = "This is a sample message that should wrap nicely";
+        let wrapped = wrap_text(text, 10);
+        let lines: Vec<&str> = wrapped.lines().collect();
+
+        assert_eq!(
+            lines,
+            vec![
+                "This is a",
+                "sample",
+                "message",
+                "that",
+                "should",
+                "wrap",
+                "nicely"
+            ]
+        );
+
+        assert!(lines.iter().all(|line| line.len() <= 10));
+    }
+
+    #[test]
+    fn format_bubble_aligns_all_lines() {
+        let text = "This longer bit of text should wrap across multiple lines \
+                    and still be aligned inside the bubble.";
+        let bubble = format_bubble(text);
+        let wrapped = wrap_text(text, 60);
+        let wrapped_lines: Vec<&str> = wrapped.lines().collect();
+        let bubble_lines: Vec<&str> = bubble.lines().collect();
+        let max_width = wrapped_lines.iter().map(|l| l.len()).max().unwrap_or(0);
+
+        assert_eq!(bubble_lines.len(), wrapped_lines.len() + 2);
+        assert_eq!(
+            bubble_lines.first().unwrap(),
+            &format!(" {}", "_".repeat(max_width + 2))
+        );
+        assert_eq!(
+            bubble_lines.last().unwrap(),
+            &format!(" {}", "-".repeat(max_width + 2))
+        );
+
+        for (idx, wrapped_line) in wrapped_lines.iter().enumerate() {
+            let body_line = bubble_lines[idx + 1];
+            assert_eq!(
+                body_line,
+                format!("/ {:<width$} \\", wrapped_line, width = max_width)
+            );
+        }
+    }
+
+    #[test]
+    fn generate_character_defaults_to_ferris() {
+        colored::control::set_override(false);
+        let ferris = generate_character("ferris").to_string();
+        let fallback = generate_character("unknown").to_string();
+
+        assert_eq!(fallback, ferris);
     }
 }
