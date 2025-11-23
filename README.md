@@ -22,6 +22,13 @@ cargo run -- "What is Rust ownership?" -m llama3.2 -c ferris -u http://127.0.0.0
 
 Responses are trimmed, wrapped to 60 characters per line, and displayed in bright white. The ASCII art lives in `src/characters.rs` if you want to add new mascots.
 
+## Characters
+
+- ferris
+- cow
+- dragon
+- bunny
+
 ## Testing
 
 Run the unit tests (bubble formatting, wrapping, and character selection) with:
